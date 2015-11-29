@@ -28,15 +28,32 @@ def explore_city_data(city_data):
     ###################################
     ### Step 1. YOUR CODE GOES HERE ###
     ###################################
+    # print type(housing_features)
+    # print type(housing_prices)
+    # print housing_prices.shape
+    # print housing_features.shape
 
     # Please calculate the following values using the Numpy library
     # Size of data (number of houses)?
+    print "Size of data: {0}".format(housing_prices.size)
+
     # Number of features?
+    print "Number of features: {0}".format(housing_features[0].size)
+
     # Minimum price?
+    print "Minimum price: {0}".format(housing_prices.min())
+
     # Maximum price?
+    print "Maximum price: {0}".format(housing_prices.max())
+
     # Calculate mean price?
+    print "Mean price: {0}".format(housing_prices.mean())
+
     # Calculate median price?
+    print "Median price: {0}".format(np.median(housing_prices))
+
     # Calculate standard deviation?
+    print "Standard deviation: {0}".format(housing_prices.std())
 
 
 def performance_metric(label, prediction):
@@ -59,6 +76,10 @@ def split_data(city_data):
     ###################################
     ### Step 3. YOUR CODE GOES HERE ###
     ###################################
+
+    from sklearn.cross_validation import train_test_split
+
+    X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.3, random_state=7)
 
     return X_train, y_train, X_test, y_test
 
@@ -190,15 +211,15 @@ def main():
     X_train, y_train, X_test, y_test = split_data(city_data)
 
     # Learning Curve Graphs
-    max_depths = [1,2,3,4,5,6,7,8,9,10]
-    for max_depth in max_depths:
-        learning_curve(max_depth, X_train, y_train, X_test, y_test)
+    # max_depths = [1,2,3,4,5,6,7,8,9,10]
+    # for max_depth in max_depths:
+    #     learning_curve(max_depth, X_train, y_train, X_test, y_test)
 
-    # Model Complexity Graph
-    model_complexity(X_train, y_train, X_test, y_test)
-
-    # Tune and predict Model
-    fit_predict_model(city_data)
+    # # Model Complexity Graph
+    # model_complexity(X_train, y_train, X_test, y_test)
+    #
+    # # Tune and predict Model
+    # fit_predict_model(city_data)
 
 
 if __name__ == "__main__":
