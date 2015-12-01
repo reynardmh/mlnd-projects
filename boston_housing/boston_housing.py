@@ -58,13 +58,16 @@ def explore_city_data(city_data):
 
 def performance_metric(label, prediction):
     """Calculate and return the appropriate error performance metric."""
+    from sklearn import metrics
 
     ###################################
     ### Step 2. YOUR CODE GOES HERE ###
     ###################################
 
     # http://scikit-learn.org/stable/modules/classes.html#sklearn-metrics-metrics
-    pass
+    # return metrics.mean_squared_error(label, prediction)
+    # return metrics.mean_absolute_error(label, prediction)
+    return metrics.median_absolute_error(label, prediction)
 
 
 def split_data(city_data):
@@ -79,7 +82,7 @@ def split_data(city_data):
 
     from sklearn.cross_validation import train_test_split
 
-    X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.3, random_state=7)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=7)
 
     return X_train, y_train, X_test, y_test
 
@@ -211,15 +214,15 @@ def main():
     X_train, y_train, X_test, y_test = split_data(city_data)
 
     # Learning Curve Graphs
-    # max_depths = [1,2,3,4,5,6,7,8,9,10]
-    # for max_depth in max_depths:
-    #     learning_curve(max_depth, X_train, y_train, X_test, y_test)
+    max_depths = [1,2,3,4,5,6,7,8,9,10]
+    for max_depth in max_depths:
+        learning_curve(max_depth, X_train, y_train, X_test, y_test)
 
-    # # Model Complexity Graph
-    # model_complexity(X_train, y_train, X_test, y_test)
-    #
-    # # Tune and predict Model
-    # fit_predict_model(city_data)
+    # Model Complexity Graph
+    model_complexity(X_train, y_train, X_test, y_test)
+
+    # Tune and predict Model
+    fit_predict_model(city_data)
 
 
 if __name__ == "__main__":
