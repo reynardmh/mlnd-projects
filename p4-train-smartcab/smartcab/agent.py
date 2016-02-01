@@ -23,7 +23,7 @@ class LearningAgent(Agent):
         deadline = self.env.get_deadline(self)
 
         # TODO: Update state
-        
+
         # TODO: Select action according to your policy
         action = None
 
@@ -35,16 +35,37 @@ class LearningAgent(Agent):
         print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
 
 
+class BasicDrivingAgent(Agent):
+    """A basic driving agent"""
+
+    def __init__(self, env):
+        super(BasicDrivingAgent, self).__init__(env)  # sets self.env = env, state = None, next_waypoint = None, and a default color
+        self.color = 'red'  # override color
+
+    def update(self, t):
+        # Gather inputs
+        inputs = self.env.sense(self)
+        deadline = self.env.get_deadline(self)
+
+        action = (None, 'forward', 'left', 'right')[random.randint(0, 3)]
+
+        # Execute action and get reward
+        reward = self.env.act(self, action)
+
+        print "BasicDrivingAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
+
+
 def run():
     """Run the agent for a finite number of trials."""
 
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
-    a = e.create_agent(LearningAgent)  # create agent
+    a = e.create_agent(BasicDrivingAgent)  # create agent
+    # a = e.create_agent(LearningAgent)  # create agent
     e.set_primary_agent(a, enforce_deadline=False)  # set agent to track
 
     # Now simulate it
-    sim = Simulator(e, update_delay=1.0)  # reduce update_delay to speed up simulation
+    sim = Simulator(e, update_delay=0.1)  # reduce update_delay to speed up simulation
     sim.run(n_trials=10)  # press Esc or close pygame window to quit
 
 
