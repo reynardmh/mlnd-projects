@@ -11,6 +11,7 @@ class LearningAgent(Agent):
     """An agent that learns to drive in the smartcab world."""
     valid_actions = (None, 'forward', 'left', 'right')
     gamma = 0.5
+    alpha = 0.9 # learning rate
     exploration_prob = 0.1
 
     def __init__(self, env):
@@ -57,7 +58,7 @@ class LearningAgent(Agent):
         next_Q = []
         for a in self.valid_actions:
             next_Q.append(self.Q(new_state, a))
-        self.Q_table[state][action] = reward + self.gamma * max(next_Q)
+        self.Q_table[state][action] = ((1-self.alpha) * self.Q(state, action)) + self.alpha * (reward + self.gamma * max(next_Q))
 
     def choose_action(self):
         # action = random.choice(self.valid_actions)
@@ -100,7 +101,12 @@ class LearningAgent(Agent):
         self.deadline = self.env.get_deadline(self)
 
         # TODO: Update state
-        self.state = "{},{}".format(inputs['light'], self.next_waypoint) # inputs['oncoming'], inputs['left'],
+        # In ideal world where the right of way applies, use these 4 input as state
+        # self.state = "{},{},{},{}".format(inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
+
+        # In this simulated world, the only thing that matters are:
+        # inputs['light'], and next_waypoint (see environment.py line 164-187)
+        self.state = "{},{}".format(inputs['light'], self.next_waypoint)
 
         # TODO: Select action according to your policy
         action = self.choose_action()
@@ -132,6 +138,7 @@ class LearningAgent(Agent):
             if self.num_iterations == N_TRIALS:
                 print "=== Summary of learning ==="
                 print "Gamma: {}".format(self.gamma)
+                print "Alpha: {}".format(self.alpha)
                 print "Exploration vs Exploitation: {} : {}".format(self.exploration_prob * 10, (1 - self.exploration_prob) * 10)
                 print "Total failures: {} times it did not reach destination within deadline".format(len(self.failure_tracking))
                 print "Total penalties: {} times it got -1".format(self.total_penalty)
