@@ -1,4 +1,5 @@
 import random
+import math
 from environment import Agent, Environment
 from planner import RoutePlanner
 from simulator import Simulator
@@ -12,7 +13,6 @@ class LearningAgent(Agent):
     valid_actions = (None, 'forward', 'left', 'right')
     gamma = 0.5
     alpha = 0.9 # learning rate
-    exploration_prob = 0.1
 
     def __init__(self, env):
         super(LearningAgent, self).__init__(env)  # sets self.env = env, state = None, next_waypoint = None, and a default color
@@ -39,6 +39,12 @@ class LearningAgent(Agent):
         self.last_reward = None
         self.total_reward = 0
         self.num_iterations += 1
+
+    # exploration probability that decreases as we have more iterations
+    def exploration_prob(self):
+        # return 0.1
+        # return 0.4 / self.num_iterations
+        return 0.4 / math.log((self.num_iterations * 2)**2)
 
     def print_Q_table(self):
         print "--------- Q-table ---------"
@@ -83,7 +89,7 @@ class LearningAgent(Agent):
                 action = a
                 break
         if action == 'undefined':
-            if random.random() < self.exploration_prob:
+            if random.random() < self.exploration_prob():
                 # randomly explore non best action just to make sure we really didn't like that action
                 action = random.choice(self.valid_actions)
             else:
@@ -137,9 +143,10 @@ class LearningAgent(Agent):
             self.print_Q_table()
             if self.num_iterations == N_TRIALS:
                 print "=== Summary of learning ==="
+                print "Total iterations: {}".format(N_TRIALS)
                 print "Gamma: {}".format(self.gamma)
                 print "Alpha: {}".format(self.alpha)
-                print "Exploration vs Exploitation: {} : {}".format(self.exploration_prob * 10, (1 - self.exploration_prob) * 10)
+                print "Final Exploration vs Exploitation: {} : {}".format(self.exploration_prob() * 10, (1 - self.exploration_prob()) * 10)
                 print "Total failures: {} times it did not reach destination within deadline".format(len(self.failure_tracking))
                 print "Total penalties: {} times it got -1".format(self.total_penalty)
                 print "Total wrong action: {} times it did not follow the direction (got 0.5)".format(self.total_wrong_action)
