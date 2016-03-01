@@ -106,7 +106,7 @@ class LearningAgent(Agent):
         inputs = self.env.sense(self)
         self.deadline = self.env.get_deadline(self)
 
-        # TODO: Update state
+        # --- Update state ---
         # In ideal world where the right of way applies, use these 4 input as state
         # self.state = "{},{},{},{}".format(inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
 
@@ -114,13 +114,13 @@ class LearningAgent(Agent):
         # inputs['light'], and next_waypoint (see environment.py line 164-187)
         self.state = "{},{}".format(inputs['light'], self.next_waypoint)
 
-        # TODO: Select action according to your policy
+        # --- Select action according to your policy ---
         action = self.choose_action()
 
         # Execute action and get reward
         reward = self.env.act(self, action)
 
-        # TODO: Learn policy based on state, action, reward
+        # --- Learn policy based on state, action, reward ---
         if self.last_state != None:
             self.update_Q(self.last_state, self.last_action, self.last_reward, self.state)
 
@@ -134,9 +134,11 @@ class LearningAgent(Agent):
             self.total_wrong_action += 1
 
         print("deadline = {}, inputs = {}, direction = {}, action = {}, reward = {}".format(self.deadline, inputs, self.next_waypoint, action, reward))
-        if self.deadline < 0:
+        if self.deadline == 0 and reward < 3:
             self.failure_tracking[self.num_iterations - 1] = self.deadline
-        if reward > 2:
+        if reward > 2 or self.deadline < 0:
+            # Update Q table again after reaching deadline, so the big reward get counted
+            self.update_Q(self.last_state, self.last_action, self.last_reward, self.state)
             # Reached destination within deadline
             print "Total reward: {}".format(self.total_reward)
             print "Remaining deadline: {}".format(self.deadline)
@@ -175,7 +177,7 @@ def run():
     e = Environment()  # create environment (also adds some dummy traffic)
     # a = e.create_agent(BasicDrivingAgent)  # create agent that randomly choose an action
     a = e.create_agent(LearningAgent)  # create agent
-    e.set_primary_agent(a, enforce_deadline=False)  # set agent to track
+    e.set_primary_agent(a, enforce_deadline=True)  # set agent to track
 
     # Now simulate it
     sim = Simulator(e, update_delay=0)  # reduce update_delay to speed up simulation
