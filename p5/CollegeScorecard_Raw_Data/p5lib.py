@@ -1,3 +1,6 @@
+import StringIO
+import os
+
 import pandas as pd
 import numpy as np
 from sklearn import metrics
@@ -53,8 +56,34 @@ col_desc = {
     'DEBT_MDN': 'Median debt',
     'GRAD_DEBT_MDN': 'Median debt complete',
     'WDRAW_DEBT_MDN': 'Median debt non-completer',
+
+    'LOCALE': 'Locale',
+    'region': 'region',
+    'PREDDEG': 'Predominant degree',
+
+    # 'age_entry': 'Average age of entry',
+    # 'agege24': 'Percent of students over 23 at entry',
+    # 'female': 'Share of female students',
+    # 'married': 'Share of married students',
+    # 'dependent': 'Share of dependent students',
+    # 'veteran': 'Share of veteran students',
+    # 'first_gen': 'Share of first-generation students',
+    # 'faminc': 'Average family income',
+    # 'md_faminc': 'Median family income',
+    # 'faminc_ind': 'Average family income for independent students',
+    # 'median_hh_inc': 'Median household income',
+    # 'poverty_rate': 'Poverty rate',
+    # 'unemp_rate': 'Unemployment rate',
+
+    # added cols
+    'L4_COLLEGE': '<4 years college',
+    'C150': 'Completion',
+    'RET_FT': 'Retention',
+    'NPT4': 'Avg net price Title IV',
+    'NUM4': 'Num Title IV student',
 }
 
+# merge some columns that are mutually exclusive (C150_4_POOLED & C150_L4_POOLED)
 
 def preprocess_data(orig_data):
     added_cols = ['L4_COLLEGE', 'C150', 'RET_FT', 'NPT4', 'NUM4']
@@ -80,12 +109,6 @@ def preprocess_data(orig_data):
         if col in data.keys():
             del data[col]
             # del col_desc[col]
-
-    col_desc['L4_COLLEGE'] = '<4 years college'
-    col_desc['C150'] = 'Completion'
-    col_desc['RET_FT'] = 'Retention'
-    col_desc['NPT4'] = 'Avg net price Title IV'
-    col_desc['NUM4'] = 'Num Title IV student'
 
     data = data[~data['C150'].isnull()]
     data = data[~data['RET_FT'].isnull()]
@@ -117,22 +140,23 @@ def split_y(y_train, y_test):
 def print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test):
     print "--- Completion ---"
     if hasattr(reg1, 'best_params_'):
-        print reg1.best_params_
+        print "best params: {}".format(reg1.best_params_)
     print_r2score(reg1, X_train, y1_train)
     r2score_reg1 = print_r2score(reg1, X_test, y1_test, test=True)
 
     print "--- Retention ---"
     if hasattr(reg2, 'best_params_'):
-        print reg2.best_params_
+        print "best params: {}".format(reg2.best_params_)
     print_r2score(reg2, X_train, y2_train)
     r2score_reg2 = print_r2score(reg2, X_test, y2_test, test=True)
 
     return (r2score_reg1, r2score_reg2)
 
-def build_SVR_model(X_train, X_test, y_train, y_test, cv=3):
+def build_SVR_model(X_train, X_test, y_train, y_test, cv=3, params=None):
     y1_train, y1_test, y2_train, y2_test = split_y(y_train, y_test)
 
-    params = {'C': np.logspace(-1, 1, 2), 'gamma': np.logspace(-1, 1, 2), 'epsilon': np.logspace(-1, 1, 2)}
+    if params == None:
+        params = {'C': np.logspace(-1, 1, 2), 'gamma': np.logspace(-1, 1, 2), 'epsilon': np.logspace(-1, 1, 2)}
     reg = SVR()
     best_reg1 = GridSearchCV(reg, params, scoring=scorer, cv=cv)
     best_reg1.fit(X_train, y1_train)
@@ -177,13 +201,13 @@ def build_KNN_model(X_train, X_test, y_train, y_test, cv=3):
     r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test)
     return (best_reg1, best_reg2, r2score_reg1, r2score_reg2)
 
-def build_RandomForest_model(X_train, X_test, y_train, y_test):
+def build_RandomForest_model(X_train, X_test, y_train, y_test, n_estimators=10):
     y1_train, y1_test, y2_train, y2_test = split_y(y_train, y_test)
 
-    reg1 = RandomForestRegressor(n_estimators=10)
+    reg1 = RandomForestRegressor(n_estimators=n_estimators)
     reg1.fit(X_train, y1_train)
 
-    reg2 = RandomForestRegressor(n_estimators=10)
+    reg2 = RandomForestRegressor(n_estimators=n_estimators)
     reg2.fit(X_train, y2_train)
 
     r2score_reg1, r2score_reg2 = print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test)
@@ -191,11 +215,8 @@ def build_RandomForest_model(X_train, X_test, y_train, y_test):
     return (reg1, reg2, r2score_reg1, r2score_reg2)
 
 
-
-
-import StringIO
-import os
-
+""" temporary code
+# run model training on random test data 10 times and see if the R2 score is consistent enough
 reg1_r2scores = []
 reg2_r2scores = []
 
@@ -217,3 +238,5 @@ print 'Completion'
 print { 'mean': reg1_r2scores.mean(), 'min': reg1_r2scores.min(), 'max': reg1_r2scores.max()}
 print 'Retention'
 print { 'mean': reg2_r2scores.mean(), 'min': reg2_r2scores.min(), 'max': reg2_r2scores.max()}
+
+"""
