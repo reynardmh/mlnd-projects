@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn import metrics
 from sklearn import cross_validation as cv
 from sklearn.tree import DecisionTreeRegressor
@@ -137,20 +138,31 @@ scorer = metrics.make_scorer(metrics.r2_score, greater_is_better=True)
 def split_y(y_train, y_test):
     return y_train[:,0], y_test[:,0], y_train[:,1], y_test[:,1]
 
-def print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test):
+def print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test, model=None):
     print "--- Completion ---"
     if hasattr(reg1, 'best_params_'):
         print "best params: {}".format(reg1.best_params_)
-    print_r2score(reg1, X_train, y1_train)
-    r2score_reg1 = print_r2score(reg1, X_test, y1_test, test=True)
+    r2score_train_reg1 = print_r2score(reg1, X_train, y1_train)
+    r2score_test_reg1  = print_r2score(reg1, X_test, y1_test, test=True)
 
     print "--- Retention ---"
     if hasattr(reg2, 'best_params_'):
         print "best params: {}".format(reg2.best_params_)
-    print_r2score(reg2, X_train, y2_train)
-    r2score_reg2 = print_r2score(reg2, X_test, y2_test, test=True)
+    r2score_train_reg2 = print_r2score(reg2, X_train, y2_train)
+    r2score_test_reg2  = print_r2score(reg2, X_test, y2_test, test=True)
 
-    return (r2score_reg1, r2score_reg2)
+    if model != None:
+        plt.title(model)
+    ax = plt.subplot(111)
+    ax.set_ylim([0, 1])
+    ax.bar(np.array(range(2)), [r2score_train_reg1, r2score_train_reg2], width=0.4, color='r')
+    ax.bar(np.array(range(2))+0.4, [r2score_test_reg1, r2score_test_reg2], width=0.4, color='b')
+    plt.ylabel('R2 score')
+    plt.legend(['Train', 'Test'])
+    plt.xticks(np.array(range(5))+ 0.4, ['Completion', 'Retention'])
+    plt.show()
+
+    return (r2score_test_reg1, r2score_test_reg2)
 
 def build_SVR_model(X_train, X_test, y_train, y_test, cv=3, params=None):
     y1_train, y1_test, y2_train, y2_test = split_y(y_train, y_test)
@@ -165,7 +177,7 @@ def build_SVR_model(X_train, X_test, y_train, y_test, cv=3, params=None):
     best_reg2 = GridSearchCV(reg, params, scoring=scorer, cv=cv)
     best_reg2.fit(X_train, y2_train)
 
-    r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test)
+    r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test, model='SVR')
 
     return (best_reg1, best_reg2, r2score_reg1, r2score_reg2)
 
@@ -181,7 +193,7 @@ def build_DecisionTree_model(X_train, X_test, y_train, y_test, cv=3):
     best_reg2 = GridSearchCV(reg, parameters, scoring=scorer, cv=cv)
     best_reg2.fit(X_train, y2_train)
 
-    r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test)
+    r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test, model='Decision Tree')
 
     return (best_reg1, best_reg2, r2score_reg1, r2score_reg2)
 
@@ -198,7 +210,7 @@ def build_KNN_model(X_train, X_test, y_train, y_test, cv=3):
     best_reg2 = GridSearchCV(reg, parameters, scoring=scorer, cv=cv)
     best_reg2.fit(X_train, y2_train)
 
-    r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test)
+    r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test, model='KNN')
     return (best_reg1, best_reg2, r2score_reg1, r2score_reg2)
 
 def build_RandomForest_model(X_train, X_test, y_train, y_test, n_estimators=10):
@@ -210,7 +222,7 @@ def build_RandomForest_model(X_train, X_test, y_train, y_test, n_estimators=10):
     reg2 = RandomForestRegressor(n_estimators=n_estimators)
     reg2.fit(X_train, y2_train)
 
-    r2score_reg1, r2score_reg2 = print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test)
+    r2score_reg1, r2score_reg2 = print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test, model='Random Forest')
 
     return (reg1, reg2, r2score_reg1, r2score_reg2)
 
