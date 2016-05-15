@@ -133,7 +133,10 @@ def print_r2score(reg, X, y, test=False):
     print "R2 score on {} data: {}".format(t, r2score)
     return r2score
 
-scorer = metrics.make_scorer(metrics.r2_score, greater_is_better=True)
+r2_scorer = metrics.make_scorer(metrics.r2_score, greater_is_better=True)
+mse_scorer = metrics.make_scorer(metrics.mean_squared_error, greater_is_better=False)
+mae_scorer = metrics.make_scorer(metrics.mean_absolute_error, greater_is_better=False)
+default_scorer = mse_scorer
 
 def split_y(y_train, y_test):
     return y_train[:,0], y_test[:,0], y_train[:,1], y_test[:,1]
@@ -164,7 +167,9 @@ def print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y
 
     return (r2score_test_reg1, r2score_test_reg2)
 
-def build_SVR_model(X_train, X_test, y_train, y_test, cv=3, params=None):
+def build_SVR_model(X_train, X_test, y_train, y_test, cv=3, params=None, scorer=None):
+    if scorer == None:
+        scorer = default_scorer
     y1_train, y1_test, y2_train, y2_test = split_y(y_train, y_test)
 
     if params == None:
@@ -181,7 +186,9 @@ def build_SVR_model(X_train, X_test, y_train, y_test, cv=3, params=None):
 
     return (best_reg1, best_reg2, r2score_reg1, r2score_reg2)
 
-def build_DecisionTree_model(X_train, X_test, y_train, y_test, cv=3):
+def build_DecisionTree_model(X_train, X_test, y_train, y_test, cv=3, scorer=None):
+    if scorer == None:
+        scorer = default_scorer
     y1_train, y1_test, y2_train, y2_test = split_y(y_train, y_test)
 
     parameters = {'max_depth': range(1,10) } # , 'min_samples_leaf': [4,5,6,7]}
@@ -197,7 +204,9 @@ def build_DecisionTree_model(X_train, X_test, y_train, y_test, cv=3):
 
     return (best_reg1, best_reg2, r2score_reg1, r2score_reg2)
 
-def build_KNN_model(X_train, X_test, y_train, y_test, cv=3):
+def build_KNN_model(X_train, X_test, y_train, y_test, cv=3, scorer=None):
+    if scorer == None:
+        scorer = default_scorer
     y1_train, y1_test, y2_train, y2_test = split_y(y_train, y_test)
 
     parameters = {'n_neighbors': range(5,20)}
@@ -213,7 +222,9 @@ def build_KNN_model(X_train, X_test, y_train, y_test, cv=3):
     r2score_reg1, r2score_reg2 = print_r2_summary(best_reg1, best_reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test, model='KNN')
     return (best_reg1, best_reg2, r2score_reg1, r2score_reg2)
 
-def build_RandomForest_model(X_train, X_test, y_train, y_test, n_estimators=10):
+def build_RandomForest_model(X_train, X_test, y_train, y_test, n_estimators=10, scorer=None):
+    if scorer == None:
+        scorer = default_scorer
     y1_train, y1_test, y2_train, y2_test = split_y(y_train, y_test)
 
     reg1 = RandomForestRegressor(n_estimators=n_estimators)
@@ -225,30 +236,3 @@ def build_RandomForest_model(X_train, X_test, y_train, y_test, n_estimators=10):
     r2score_reg1, r2score_reg2 = print_r2_summary(reg1, reg2, X_train, X_test, y1_train, y1_test, y2_train, y2_test, model='Random Forest')
 
     return (reg1, reg2, r2score_reg1, r2score_reg2)
-
-
-""" temporary code
-# run model training on random test data 10 times and see if the R2 score is consistent enough
-reg1_r2scores = []
-reg2_r2scores = []
-
-for i in range(0, 10):
-    # suppress output
-    actualstdout = sys.stdout
-    sys.stdout = open(os.devnull,'w')
-
-    X_train, X_test, y_train, y_test = cv.train_test_split(finalX, y, train_size=0.8)
-    SVR_reg1, SVR_reg2, r2score_reg1, r2score_reg2 = p5lib.build_SVR_model(X_train, X_test, y_train, y_test, cv=3)
-    reg1_r2scores.append(r2score_reg1)
-    reg2_r2scores.append(r2score_reg2)
-
-    sys.stdout = actualstdout
-
-reg1_r2scores = pd.Series(reg1_r2scores)
-reg2_r2scores = pd.Series(reg2_r2scores)
-print 'Completion'
-print { 'mean': reg1_r2scores.mean(), 'min': reg1_r2scores.min(), 'max': reg1_r2scores.max()}
-print 'Retention'
-print { 'mean': reg2_r2scores.mean(), 'min': reg2_r2scores.min(), 'max': reg2_r2scores.max()}
-
-"""
